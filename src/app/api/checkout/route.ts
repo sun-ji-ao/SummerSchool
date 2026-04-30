@@ -1,7 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createCheckoutSession } from "@/server/services/payment-service";
+import { getClientIp, isRateLimited } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const ip = getClientIp(request.headers);
+  const blocked = isRateLimited({
+    key: `checkout:${ip}`,
+    maxRequests: 12,
+    windowMs: 60_000,
+  });
+  if (blocked) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  }
   const body = (await request.json()) as {
     bookingId?: number;
     amount?: number;
