@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { hash } from "bcryptjs";
 
 const prisma = new PrismaClient();
 
@@ -7,6 +8,7 @@ async function runSeed(): Promise<void> {
   await prisma.bookingEnquiry.deleteMany();
   await prisma.contact.deleteMany();
   await prisma.booking.deleteMany();
+  await prisma.admin.deleteMany();
   await prisma.course.deleteMany();
   await prisma.location.deleteMany();
   await prisma.category.deleteMany();
@@ -86,8 +88,19 @@ async function runSeed(): Promise<void> {
       },
     ],
   });
+  const adminEmail = (process.env.ADMIN_SEED_EMAIL ?? "admin@summerschool-uk.com").toLowerCase();
+  const adminPassword = process.env.ADMIN_SEED_PASSWORD ?? "Admin@123456";
+  const hashedPassword = await hash(adminPassword, 10);
+  await prisma.admin.create({
+    data: {
+      email: adminEmail,
+      name: "System Admin",
+      hashedPassword,
+      role: "admin",
+    },
+  });
   console.log(
-    `Seed completed. categories=${categories.count}, locations=${locations.count}, courses=5`,
+    `Seed completed. categories=${categories.count}, locations=${locations.count}, courses=5, admin=${adminEmail}`,
   );
 }
 
