@@ -43,9 +43,17 @@ export default async function AdminEnquiriesPage({ searchParams }: AdminEnquirie
     <main className="mx-auto w-full max-w-7xl px-6 py-10">
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Admin · Enquiries</h1>
-        <Link href="/admin" className="text-sm text-blue-700 underline">
-          Back to dashboard
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link
+            href={`/api/admin/export/enquiries?${queryBase}`}
+            className="rounded bg-slate-900 px-3 py-1 text-sm text-white"
+          >
+            Export CSV
+          </Link>
+          <Link href="/admin" className="text-sm text-blue-700 underline">
+            Back to dashboard
+          </Link>
+        </div>
       </div>
       <form className="mb-4 grid gap-3 rounded-xl border border-slate-200 bg-white p-4 md:grid-cols-4">
         <input
