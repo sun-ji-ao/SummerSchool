@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { CoursePublishToggle } from "@/app/admin/course-publish-toggle";
+import { PublishToggle } from "@/app/admin/publish-toggle";
 
 export const dynamic = "force-dynamic";
 
@@ -45,9 +45,14 @@ export default async function AdminCoursesPage({ searchParams }: AdminCoursesPag
     <main className="mx-auto w-full max-w-7xl px-6 py-10">
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Admin · Courses</h1>
-        <Link href="/admin" className="text-sm text-blue-700 underline">
-          Back to dashboard
-        </Link>
+        <div className="inline-flex gap-4 text-sm">
+          <Link href="/admin/courses/import" className="text-blue-700 underline">
+            Import CSV
+          </Link>
+          <Link href="/admin" className="text-blue-700 underline">
+            Back to dashboard
+          </Link>
+        </div>
       </div>
       <form className="mb-4 grid gap-3 rounded-xl border border-slate-200 bg-white p-4 md:grid-cols-4">
         <input
@@ -105,7 +110,7 @@ export default async function AdminCoursesPage({ searchParams }: AdminCoursesPag
                 </td>
                 <td className="px-3 py-2">{course.price ?? "N/A"}</td>
                 <td className="px-3 py-2">
-                  <CoursePublishToggle courseId={course.id} initialValue={course.isPublished} />
+                  <PublishToggle endpoint={`/api/admin/courses/${course.id}/publish`} initialValue={course.isPublished} />
                 </td>
               </tr>
             ))}

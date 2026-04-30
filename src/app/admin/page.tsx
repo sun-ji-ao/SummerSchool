@@ -9,6 +9,8 @@ export default async function AdminPage() {
   let enquiryCount = 0;
   let bookingCount = 0;
   let paymentCount = 0;
+  let postCount = 0;
+  let testimonialCount = 0;
   let recentBookings: Array<{
     id: number;
     userEmail: string;
@@ -23,13 +25,25 @@ export default async function AdminPage() {
   }> = [];
   let loadError: string | null = null;
   try {
-    [courseCount, contactCount, enquiryCount, bookingCount, paymentCount, recentBookings, recentContacts] =
+    [
+      courseCount,
+      contactCount,
+      enquiryCount,
+      bookingCount,
+      paymentCount,
+      postCount,
+      testimonialCount,
+      recentBookings,
+      recentContacts,
+    ] =
       await Promise.all([
         db.course.count(),
         db.contact.count(),
         db.bookingEnquiry.count(),
         db.booking.count(),
         db.payment.count(),
+        db.post.count(),
+        db.testimonial.count(),
         db.booking.findMany({
           orderBy: { createdAt: "desc" },
           take: 8,
@@ -52,13 +66,15 @@ export default async function AdminPage() {
         </Link>
       </div>
 
-      <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-7">
         {[
           { label: "Courses", value: courseCount },
           { label: "Contacts", value: contactCount },
           { label: "Enquiries", value: enquiryCount },
           { label: "Bookings", value: bookingCount },
           { label: "Payments", value: paymentCount },
+          { label: "Posts", value: postCount },
+          { label: "Testimonials", value: testimonialCount },
         ].map((card) => (
           <article key={card.label} className="rounded-xl border border-slate-200 bg-white p-4">
             <p className="text-sm text-slate-500">{card.label}</p>
@@ -133,6 +149,12 @@ export default async function AdminPage() {
           </Link>
           <Link href="/admin/payments" className="underline">
             Payments
+          </Link>
+          <Link href="/admin/posts" className="underline">
+            Posts
+          </Link>
+          <Link href="/admin/testimonials" className="underline">
+            Testimonials
           </Link>
         </span>
       </section>

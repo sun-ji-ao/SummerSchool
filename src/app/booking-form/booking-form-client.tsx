@@ -9,8 +9,25 @@ type SubmitState = {
   checkoutUrl?: string;
 };
 
-export function BookingFormClient() {
+type BookingFormClientProps = {
+  preselectedCourse: {
+    id: number;
+    slug: string;
+    title: string;
+    categoryName: string;
+    city: string;
+    price: number | null;
+    currency: string;
+  } | null;
+};
+
+export function BookingFormClient({ preselectedCourse }: BookingFormClientProps) {
   const [state, setState] = useState<SubmitState>({ loading: false });
+  const defaultAmountPence =
+    preselectedCourse?.price && preselectedCourse.price > 0
+      ? Math.max(10_000, Math.min(100_000, Math.round(preselectedCourse.price * 100 * 0.2)))
+      : 50_000;
+  const bookingCurrency = preselectedCourse?.currency ?? "GBP";
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -27,9 +44,13 @@ export function BookingFormClient() {
           type: "SUMMER",
           userName,
           userEmail,
+          courseId: preselectedCourse?.id,
           amountExpected: amount,
-          currency: "GBP",
-          payload: { source: "booking-form-ui" },
+          currency: bookingCurrency,
+          payload: {
+            source: "booking-form-ui",
+            courseSlug: preselectedCourse?.slug ?? null,
+          },
         }),
       });
       const bookingJson = (await bookingResponse.json()) as { id?: number; error?: string };
@@ -42,7 +63,7 @@ export function BookingFormClient() {
         body: JSON.stringify({
           bookingId: bookingJson.id,
           amount,
-          currency: "GBP",
+          currency: bookingCurrency,
         }),
       });
       const checkoutJson = (await checkoutResponse.json()) as {
@@ -67,6 +88,19 @@ export function BookingFormClient() {
 
   return (
     <div className="mt-6 rounded-xl border border-slate-200 p-6">
+      {preselectedCourse ? (
+        <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
+          <p className="font-medium">Selected course: {preselectedCourse.title}</p>
+          <p>
+            {preselectedCourse.categoryName} | {preselectedCourse.city}
+          </p>
+          {preselectedCourse.price ? (
+            <p>
+              Suggested deposit: {bookingCurrency} {(defaultAmountPence / 100).toFixed(0)} (20% of course fee)
+            </p>
+          ) : null}
+        </div>
+      ) : null}
       <form className="grid gap-4" onSubmit={handleSubmit}>
         <input
           className="rounded border border-slate-300 px-3 py-2"
@@ -86,7 +120,7 @@ export function BookingFormClient() {
           name="amount"
           placeholder="Deposit amount (pence)"
           type="number"
-          defaultValue={50000}
+          defaultValue={defaultAmountPence}
           min={100}
           required
         />

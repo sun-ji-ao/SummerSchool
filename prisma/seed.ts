@@ -5,6 +5,8 @@ const prisma = new PrismaClient();
 
 async function runSeed(): Promise<void> {
   await prisma.payment.deleteMany();
+  await prisma.post.deleteMany();
+  await prisma.testimonial.deleteMany();
   await prisma.bookingEnquiry.deleteMany();
   await prisma.contact.deleteMany();
   await prisma.booking.deleteMany();
@@ -85,6 +87,48 @@ async function runSeed(): Promise<void> {
         promoLabel: "Editor Pick",
         categoryId: categoryIdMap.get("elite-immersion")!,
         locationId: locationIdMap.get("oxford")!,
+      },
+    ],
+  });
+  await prisma.post.createMany({
+    data: [
+      {
+        title: "How to Choose a UK Summer School Program",
+        slug: "how-to-choose-uk-summer-school",
+        excerpt: "A practical checklist for parents planning UK summer study.",
+        content:
+          "Focus on age fit, teaching style, city environment, and support services. Always compare academic level and pastoral care before booking.",
+        isPublished: true,
+        publishedAt: new Date(),
+      },
+      {
+        title: "Oxford vs Cambridge: Which Campus Fits Better?",
+        slug: "oxford-vs-cambridge-campus",
+        excerpt: "Compare learning atmosphere, city vibe, and course strengths.",
+        content:
+          "Oxford is often preferred for debate-style classes and central college life, while Cambridge offers a calmer rhythm and strong STEM options.",
+        isPublished: true,
+        publishedAt: new Date(),
+      },
+    ],
+  });
+  await prisma.testimonial.createMany({
+    data: [
+      {
+        studentName: "Emily Zhang",
+        country: "China",
+        content: "The teachers were patient and the project classes were very practical.",
+        programName: "Oxford University Intensive English",
+        isPublished: true,
+        displayOrder: 1,
+      },
+      {
+        studentName: "David Lin",
+        country: "Singapore",
+        content: "I improved my speaking confidence and made friends from many countries.",
+        programName: "Harrow School Summer English",
+        isPublished: true,
+        displayOrder: 2,
       },
     ],
   });

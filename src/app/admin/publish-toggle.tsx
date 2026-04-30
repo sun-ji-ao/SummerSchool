@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 
-type CoursePublishToggleProps = {
-  courseId: number;
+type PublishToggleProps = {
+  endpoint: string;
   initialValue: boolean;
 };
 
-export function CoursePublishToggle({ courseId, initialValue }: CoursePublishToggleProps) {
+export function PublishToggle({ endpoint, initialValue }: PublishToggleProps) {
   const [value, setValue] = useState(initialValue);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -16,7 +16,7 @@ export function CoursePublishToggle({ courseId, initialValue }: CoursePublishTog
     setSaving(true);
     setError(null);
     const next = !value;
-    const response = await fetch(`/api/admin/courses/${courseId}/publish`, {
+    const response = await fetch(endpoint, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ isPublished: next }),
