@@ -19,6 +19,9 @@ export default async function AdminPaymentsPage() {
           <Link href="/api/admin/export/payments" className="rounded bg-slate-900 px-3 py-1 text-sm text-white">
             Export CSV
           </Link>
+          <Link href="/admin/payments/reconciliation" className="text-sm text-blue-700 underline">
+            Reconciliation Guide
+          </Link>
           <Link href="/admin" className="text-sm text-blue-700 underline">
             Back to dashboard
           </Link>
