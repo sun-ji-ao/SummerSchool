@@ -120,7 +120,21 @@ export default async function AdminPage() {
       </section>
 
       <section className="mt-8 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-        当前后台为运营监控 MVP，下一阶段将补齐 NextAuth 权限控制与完整 CRUD 操作页。
+        当前后台已支持基础状态操作。快速入口：
+        <span className="ml-2 inline-flex gap-3">
+          <Link href="/admin/courses" className="underline">
+            Courses
+          </Link>
+          <Link href="/admin/bookings" className="underline">
+            Bookings
+          </Link>
+          <Link href="/admin/enquiries" className="underline">
+            Enquiries
+          </Link>
+          <Link href="/admin/payments" className="underline">
+            Payments
+          </Link>
+        </span>
       </section>
       {loadError ? (
         <section className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
