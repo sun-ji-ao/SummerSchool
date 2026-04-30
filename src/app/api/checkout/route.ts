@@ -12,6 +12,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (!body?.bookingId || !body?.amount) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return NextResponse.json(
+      { error: "Stripe is not configured. Please set STRIPE_SECRET_KEY." },
+      { status: 500 },
+    );
+  }
   const origin = request.nextUrl.origin;
   const session = await createCheckoutSession({
     bookingId: body.bookingId,
