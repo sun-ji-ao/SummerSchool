@@ -1,4 +1,4 @@
-import { courses } from "@/lib/site-data";
+import { findCourses } from "@/server/services/catalog-service";
 
 type FinderPageProps = {
   searchParams: Promise<{ age?: string; city?: string; category?: string; keyword?: string }>;
@@ -10,12 +10,11 @@ export default async function CourseFinderPage({ searchParams }: FinderPageProps
   const city = params.city?.toLowerCase();
   const category = params.category?.toLowerCase();
   const keyword = params.keyword?.toLowerCase();
-  const filtered = courses.filter((course) => {
-    const byAge = age > 0 ? age >= course.ageMin && age <= course.ageMax : true;
-    const byCity = city ? course.city.includes(city) : true;
-    const byCategory = category ? course.category === category : true;
-    const byKeyword = keyword ? course.title.toLowerCase().includes(keyword) : true;
-    return byAge && byCity && byCategory && byKeyword;
+  const filtered = await findCourses({
+    age: age > 0 ? age : undefined,
+    city,
+    category,
+    keyword,
   });
   return (
     <main className="mx-auto w-full max-w-6xl px-6 py-10">
@@ -26,7 +25,7 @@ export default async function CourseFinderPage({ searchParams }: FinderPageProps
           <article key={course.slug} className="rounded-xl border border-slate-200 p-4">
             <h2 className="font-semibold">{course.title}</h2>
             <p className="text-sm text-slate-600">
-              {course.city} | {course.category} | Age {course.ageMin}-{course.ageMax}
+              {course.location.city} | {course.category.slug} | Age {course.ageMin}-{course.ageMax}
             </p>
           </article>
         ))}
