@@ -103,7 +103,7 @@ export default async function CoursePage({ params }: CoursePageProps) {
             Book This Course
           </Link>
           <Link
-            href={`/contact-us?course=${course.slug}`}
+            href={`/contact-us?source=course-detail&course=${course.slug}&city=${encodeURIComponent(course.location.city)}`}
             className="rounded border border-slate-300 bg-white px-4 py-2 text-sm text-slate-800"
           >
             Ask an Advisor
