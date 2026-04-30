@@ -8,7 +8,7 @@ type RouteParams = {
   params: Promise<{ id: string }>;
 };
 
-export async function PATCH(request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
+export async function DELETE(request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
   const unauthorized = await requireAdminSession();
   if (unauthorized) {
     return unauthorized;
@@ -18,21 +18,18 @@ export async function PATCH(request: NextRequest, { params }: RouteParams): Prom
     return csrfRejected;
   }
   const ip = getClientIp(request.headers);
-  if (isRateLimited({ key: `admin-posts-publish:${ip}`, maxRequests: 40, windowMs: 60_000 })) {
+  if (isRateLimited({ key: `admin-categories-delete:${ip}`, maxRequests: 20, windowMs: 60_000 })) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
   const { id } = await params;
-  const postId = Number(id);
-  if (!Number.isFinite(postId)) {
-    return NextResponse.json({ error: "Invalid post id" }, { status: 400 });
+  const categoryId = Number(id);
+  if (!Number.isFinite(categoryId)) {
+    return NextResponse.json({ error: "Invalid category id" }, { status: 400 });
   }
-  const body = (await request.json()) as { isPublished?: boolean };
-  if (typeof body.isPublished !== "boolean") {
-    return NextResponse.json({ error: "Missing isPublished" }, { status: 400 });
+  const courseCount = await db.course.count({ where: { categoryId } });
+  if (courseCount > 0) {
+    return NextResponse.json({ error: "Cannot delete category with linked courses" }, { status: 400 });
   }
-  await db.post.update({
-    where: { id: postId },
-    data: { isPublished: body.isPublished },
-  });
+  await db.category.delete({ where: { id: categoryId } });
   return NextResponse.json({ ok: true });
 }

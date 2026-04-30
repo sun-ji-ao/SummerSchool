@@ -3,6 +3,7 @@ import { BookingStatus } from "@prisma/client";
 import { db } from "@/lib/db";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { getClientIp, isRateLimited } from "@/lib/rate-limit";
+import { validateSameOrigin } from "@/lib/csrf";
 import { assertBookingStatusTransition } from "@/server/domain/booking-state-machine";
 
 type RouteParams = {
@@ -13,6 +14,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams): Prom
   const unauthorized = await requireAdminSession();
   if (unauthorized) {
     return unauthorized;
+  }
+  const csrfRejected = validateSameOrigin(request);
+  if (csrfRejected) {
+    return csrfRejected;
   }
   const ip = getClientIp(request.headers);
   const blocked = isRateLimited({

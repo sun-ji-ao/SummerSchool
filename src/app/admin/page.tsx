@@ -141,6 +141,12 @@ export default async function AdminPage() {
           <Link href="/admin/courses" className="underline">
             Courses
           </Link>
+          <Link href="/admin/categories" className="underline">
+            Categories
+          </Link>
+          <Link href="/admin/locations" className="underline">
+            Locations
+          </Link>
           <Link href="/admin/bookings" className="underline">
             Bookings
           </Link>

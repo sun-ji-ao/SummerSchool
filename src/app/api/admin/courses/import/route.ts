@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { getClientIp, isRateLimited } from "@/lib/rate-limit";
+import { validateSameOrigin } from "@/lib/csrf";
 import { importCoursesFromCsv } from "@/server/services/course-import-service";
 
 type ImportRequestBody = {
@@ -13,6 +14,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const unauthorized = await requireAdminSession();
   if (unauthorized) {
     return unauthorized;
+  }
+  const csrfRejected = validateSameOrigin(request);
+  if (csrfRejected) {
+    return csrfRejected;
   }
   const ip = getClientIp(request.headers);
   if (isRateLimited({ key: `admin-courses-import:${ip}`, maxRequests: 8, windowMs: 60_000 })) {

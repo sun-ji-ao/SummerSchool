@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { getClientIp, isRateLimited } from "@/lib/rate-limit";
+import { validateSameOrigin } from "@/lib/csrf";
 
 type RouteParams = {
   params: Promise<{ id: string }>;
@@ -20,6 +21,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams): Prom
   const unauthorized = await requireAdminSession();
   if (unauthorized) {
     return unauthorized;
+  }
+  const csrfRejected = validateSameOrigin(request);
+  if (csrfRejected) {
+    return csrfRejected;
   }
   const ip = getClientIp(request.headers);
   if (isRateLimited({ key: `admin-testimonials-update:${ip}`, maxRequests: 30, windowMs: 60_000 })) {
@@ -52,6 +57,10 @@ export async function DELETE(request: NextRequest, { params }: RouteParams): Pro
   const unauthorized = await requireAdminSession();
   if (unauthorized) {
     return unauthorized;
+  }
+  const csrfRejected = validateSameOrigin(request);
+  if (csrfRejected) {
+    return csrfRejected;
   }
   const ip = getClientIp(request.headers);
   if (isRateLimited({ key: `admin-testimonials-delete:${ip}`, maxRequests: 20, windowMs: 60_000 })) {
