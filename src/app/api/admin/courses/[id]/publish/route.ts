@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { BookingEnquiryStatus } from "@prisma/client";
 import { db } from "@/lib/db";
 import { requireAdminSession } from "@/lib/admin-auth";
 
@@ -13,17 +12,17 @@ export async function PATCH(request: NextRequest, { params }: RouteParams): Prom
     return unauthorized;
   }
   const { id } = await params;
-  const enquiryId = Number(id);
-  if (!Number.isFinite(enquiryId)) {
-    return NextResponse.json({ error: "Invalid enquiry id" }, { status: 400 });
+  const courseId = Number(id);
+  if (!Number.isFinite(courseId)) {
+    return NextResponse.json({ error: "Invalid course id" }, { status: 400 });
   }
-  const body = (await request.json()) as { status?: BookingEnquiryStatus };
-  if (!body.status) {
-    return NextResponse.json({ error: "Missing status" }, { status: 400 });
+  const body = (await request.json()) as { isPublished?: boolean };
+  if (typeof body.isPublished !== "boolean") {
+    return NextResponse.json({ error: "Missing isPublished" }, { status: 400 });
   }
-  await db.bookingEnquiry.update({
-    where: { id: enquiryId },
-    data: { status: body.status },
+  await db.course.update({
+    where: { id: courseId },
+    data: { isPublished: body.isPublished },
   });
   return NextResponse.json({ ok: true });
 }

@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { BookingStatus } from "@prisma/client";
 import { db } from "@/lib/db";
+import { requireAdminSession } from "@/lib/admin-auth";
 
 type RouteParams = {
   params: Promise<{ id: string }>;
 };
 
 export async function PATCH(request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
+  const unauthorized = await requireAdminSession();
+  if (unauthorized) {
+    return unauthorized;
+  }
   const { id } = await params;
   const bookingId = Number(id);
   if (!Number.isFinite(bookingId)) {

@@ -1,10 +1,39 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
+import { CoursePublishToggle } from "@/app/admin/course-publish-toggle";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminCoursesPage() {
+type AdminCoursesPageProps = {
+  searchParams: Promise<{ q?: string; category?: string; published?: string }>;
+};
+
+export default async function AdminCoursesPage({ searchParams }: AdminCoursesPageProps) {
+  const query = await searchParams;
+  const keyword = query.q?.trim();
+  const category = query.category?.trim();
+  const published = query.published?.trim();
+  const categories = await db.category.findMany({ orderBy: { name: "asc" } });
   const courses = await db.course.findMany({
+    where: {
+      ...(keyword
+        ? {
+            title: {
+              contains: keyword,
+              mode: "insensitive",
+            },
+          }
+        : {}),
+      ...(category
+        ? {
+            category: {
+              slug: category,
+            },
+          }
+        : {}),
+      ...(published === "true" ? { isPublished: true } : {}),
+      ...(published === "false" ? { isPublished: false } : {}),
+    },
     orderBy: { createdAt: "desc" },
     take: 50,
     include: {
@@ -20,6 +49,39 @@ export default async function AdminCoursesPage() {
           Back to dashboard
         </Link>
       </div>
+      <form className="mb-4 grid gap-3 rounded-xl border border-slate-200 bg-white p-4 md:grid-cols-4">
+        <input
+          className="rounded border border-slate-300 px-3 py-2 text-sm"
+          type="text"
+          name="q"
+          placeholder="Search by title"
+          defaultValue={keyword ?? ""}
+        />
+        <select
+          className="rounded border border-slate-300 px-3 py-2 text-sm"
+          name="category"
+          defaultValue={category ?? ""}
+        >
+          <option value="">All categories</option>
+          {categories.map((item) => (
+            <option key={item.id} value={item.slug}>
+              {item.name}
+            </option>
+          ))}
+        </select>
+        <select
+          className="rounded border border-slate-300 px-3 py-2 text-sm"
+          name="published"
+          defaultValue={published ?? ""}
+        >
+          <option value="">All publish states</option>
+          <option value="true">Published only</option>
+          <option value="false">Draft only</option>
+        </select>
+        <button className="rounded bg-slate-900 px-4 py-2 text-sm text-white" type="submit">
+          Apply filters
+        </button>
+      </form>
       <div className="overflow-auto rounded-xl border border-slate-200 bg-white">
         <table className="w-full text-left text-sm">
           <thead>
@@ -42,7 +104,9 @@ export default async function AdminCoursesPage() {
                   {course.ageMin}-{course.ageMax}
                 </td>
                 <td className="px-3 py-2">{course.price ?? "N/A"}</td>
-                <td className="px-3 py-2">{course.isPublished ? "Yes" : "No"}</td>
+                <td className="px-3 py-2">
+                  <CoursePublishToggle courseId={course.id} initialValue={course.isPublished} />
+                </td>
               </tr>
             ))}
           </tbody>
