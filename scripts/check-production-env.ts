@@ -1,3 +1,6 @@
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
+
 type Rule = {
   key: string;
   required: boolean;
@@ -16,6 +19,49 @@ const RULES: Rule[] = [
   { key: "REDIRECTS_ENABLED", required: false, description: "重定向开关" },
 ];
 
+function parseEnvFile(content: string): Record<string, string> {
+  const parsed: Record<string, string> = {};
+  const lines: string[] = content.split(/\r?\n/);
+  for (const rawLine of lines) {
+    const line: string = rawLine.trim();
+    if (!line || line.startsWith("#")) {
+      continue;
+    }
+    const equalIndex: number = line.indexOf("=");
+    if (equalIndex <= 0) {
+      continue;
+    }
+    const key: string = line.slice(0, equalIndex).trim();
+    let value: string = line.slice(equalIndex + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    parsed[key] = value;
+  }
+  return parsed;
+}
+
+function loadLocalEnvFiles(): void {
+  const cwd: string = process.cwd();
+  const candidates: string[] = [".env", ".env.local"];
+  for (const fileName of candidates) {
+    const filePath: string = path.join(cwd, fileName);
+    if (!existsSync(filePath)) {
+      continue;
+    }
+    const content: string = readFileSync(filePath, "utf8");
+    const parsed: Record<string, string> = parseEnvFile(content);
+    for (const [key, value] of Object.entries(parsed)) {
+      if (process.env[key] === undefined) {
+        process.env[key] = value;
+      }
+    }
+  }
+}
+
 function mask(value: string): string {
   if (value.length <= 8) {
     return "***";
@@ -24,6 +70,7 @@ function mask(value: string): string {
 }
 
 function runCheck(): void {
+  loadLocalEnvFiles();
   let hasError = false;
   console.log("生产环境变量检查：");
   for (const rule of RULES) {
