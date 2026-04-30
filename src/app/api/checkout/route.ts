@@ -1,12 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createCheckoutSession } from "@/server/services/payment-service";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const body = await request.json();
+  const body = (await request.json()) as {
+    bookingId?: number;
+    amount?: number;
+    currency?: string;
+    successUrl?: string;
+    cancelUrl?: string;
+  };
   if (!body?.bookingId || !body?.amount) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
+  const origin = request.nextUrl.origin;
+  const session = await createCheckoutSession({
+    bookingId: body.bookingId,
+    amount: body.amount,
+    currency: body.currency,
+    successUrl: body.successUrl ?? `${origin}/cart?checkout=success`,
+    cancelUrl: body.cancelUrl ?? `${origin}/cart?checkout=cancel`,
+  });
   return NextResponse.json(
-    { ok: true, checkoutUrl: "/cart?checkout=mock", bookingId: body.bookingId },
+    { ok: true, checkoutUrl: session.url, bookingId: body.bookingId, sessionId: session.id },
     { status: 201 },
   );
 }
