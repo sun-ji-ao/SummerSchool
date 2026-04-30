@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "db:seed": "tsx prisma/seed.ts",
-    "import:courses": "tsx scripts/import-courses.ts"
+    "import:courses": "tsx scripts/import-courses.ts",
+    "test:booking-state": "tsx scripts/test-booking-state-machine.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.17.1",

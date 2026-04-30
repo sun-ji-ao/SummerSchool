@@ -1,6 +1,8 @@
 import Stripe from "stripe";
 import { db } from "@/lib/db";
 import { getStripeClient } from "@/lib/stripe";
+import { assertBookingStatusTransition } from "@/server/domain/booking-state-machine";
+import { sendDepositPaidEmail } from "@/server/services/mailer-service";
 
 type CheckoutInput = {
   bookingId: number;
@@ -17,6 +19,7 @@ export async function createCheckoutSession(input: CheckoutInput): Promise<Strip
   if (!booking) {
     throw new Error("Booking not found");
   }
+  assertBookingStatusTransition(booking.status, "AWAITING_DEPOSIT");
   const stripe = getStripeClient();
   const currency = (input.currency ?? booking.currency ?? "GBP").toLowerCase();
   const session = await stripe.checkout.sessions.create({
@@ -69,6 +72,7 @@ export async function handleCheckoutCompleted(
   if (!Number.isFinite(bookingId)) {
     return;
   }
+  let shouldNotify = false;
   await db.$transaction(async (tx) => {
     const existingEvent = await tx.payment.findFirst({
       where: { stripeEventId: eventId },
@@ -86,11 +90,47 @@ export async function handleCheckoutCompleted(
           typeof session.payment_intent === "string" ? session.payment_intent : null,
       },
     });
-    await tx.booking.update({
+    const currentBooking = await tx.booking.findUnique({
       where: { id: bookingId },
-      data: { status: "DEPOSIT_PAID" },
+      select: { status: true },
     });
+    if (currentBooking) {
+      assertBookingStatusTransition(currentBooking.status, "DEPOSIT_PAID");
+      await tx.booking.update({
+        where: { id: bookingId },
+        data: { status: "DEPOSIT_PAID" },
+      });
+      shouldNotify = true;
+    }
   });
+  if (shouldNotify) {
+    const paidBooking = await db.booking.findUnique({
+      where: { id: bookingId },
+      select: {
+        id: true,
+        userEmail: true,
+        userName: true,
+        type: true,
+        amountExpected: true,
+        currency: true,
+      },
+    });
+    if (!paidBooking) {
+      return;
+    }
+    try {
+      await sendDepositPaidEmail({
+        bookingId: paidBooking.id,
+        userEmail: paidBooking.userEmail,
+        userName: paidBooking.userName,
+        bookingType: paidBooking.type,
+        amountExpected: paidBooking.amountExpected,
+        currency: paidBooking.currency,
+      });
+    } catch (error) {
+      console.error("Failed to send deposit paid email:", error);
+    }
+  }
 }
 
 export async function handleCheckoutExpired(

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { BookingType } from "@prisma/client";
 import { createBooking } from "@/server/services/booking-service";
+import { sendBookingSubmittedEmail } from "@/server/services/mailer-service";
 import { getClientIp, isRateLimited } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -34,5 +35,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     currency: body.currency,
     payload: body.payload,
   });
+  try {
+    await sendBookingSubmittedEmail({
+      bookingId: booking.id,
+      userEmail: booking.userEmail,
+      userName: booking.userName,
+      bookingType: booking.type,
+      amountExpected: booking.amountExpected,
+      currency: booking.currency,
+    });
+  } catch (error) {
+    console.error("Failed to send booking submitted email:", error);
+  }
   return NextResponse.json({ ok: true, channel: "bookings", id: booking.id }, { status: 201 });
 }
